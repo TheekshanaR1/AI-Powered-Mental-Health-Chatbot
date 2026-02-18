@@ -30,7 +30,13 @@ app.add_middleware(
 def read_root():
     return FileResponse("chatbot-ui/index.html")
 
-app.mount("/ui", StaticFiles(directory="chatbot-ui"), name="ui")
+@app.get("/style.css")
+def get_css():
+    return FileResponse("chatbot-ui/style.css", media_type="text/css")
+
+@app.get("/chatbot.js")
+def get_js():
+    return FileResponse("chatbot-ui/chatbot.js", media_type="application/javascript")
 
 @app.post("/chat")
 def chat_with_memory(request: ChatRequest):
