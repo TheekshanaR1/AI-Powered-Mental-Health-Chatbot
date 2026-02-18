@@ -22,7 +22,7 @@ def _get_client():
 
 # LLM wrapper for LlamaIndex
 class GeminiLLMWrapperForLlama(CustomLLM):
-    model: str = "gemini-2.5-flash"
+    model: str = "models/gemini-2.5-flash"
     temperature: float = 0.2
     context_window: int = 8192
     num_output: int = 512

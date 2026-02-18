@@ -66,6 +66,35 @@
             chat.style.display = chat.style.display === "flex" ? "none" : "flex";
         }
 
+        function showTypingIndicator() {
+            const box = document.getElementById("chatBox");
+            
+            const typingDiv = document.createElement("div");
+            typingDiv.classList.add("message", "bot");
+            typingDiv.id = "typingIndicator";
+            
+            const avatar = document.createElement("div");
+            avatar.classList.add("avatar");
+            avatar.innerHTML = "🤖";
+            
+            const bubble = document.createElement("div");
+            bubble.classList.add("bubble");
+            bubble.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
+            
+            typingDiv.appendChild(avatar);
+            typingDiv.appendChild(bubble);
+            box.appendChild(typingDiv);
+            
+            box.scrollTop = box.scrollHeight;
+        }
+        
+        function hideTypingIndicator() {
+            const indicator = document.getElementById("typingIndicator");
+            if (indicator) {
+                indicator.remove();
+            }
+        }
+
         function appendMessage(role, text) {
             const box = document.getElementById("chatBox");
 
@@ -96,6 +125,9 @@
 
             appendMessage("You", text);
             input.value = "";
+            
+            // Show typing indicator
+            showTypingIndicator();
 
             try {
                 const res = await fetch(API_URL, {
@@ -109,6 +141,9 @@
 
                 const data = await res.json();
                 
+                // Hide typing indicator
+                hideTypingIndicator();
+                
                 if (data.response) {
                     appendMessage("Bot", data.response);
                 } else if (data.error) {
@@ -118,6 +153,8 @@
                 }
 
             } catch (error) {
+                // Hide typing indicator on error too
+                hideTypingIndicator();
                 appendMessage("Bot", "Unable to connect to server.");
             }
         }
