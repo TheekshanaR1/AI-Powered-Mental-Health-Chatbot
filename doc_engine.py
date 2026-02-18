@@ -1,47 +1,65 @@
 # doc_engine.py
 import os
 from dotenv import load_dotenv
-from llama_index import VectorStoreIndex, SimpleDirectoryReader
-from llama_index import ServiceContext, LLMPredictor, PromptHelper
-import google.generativeai as genai
+from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, Settings
+from llama_index.core.llms import CustomLLM, CompletionResponse, LLMMetadata
+from llama_index.core.llms.callbacks import llm_completion_callback
+from llama_index.embeddings.fastembed import FastEmbedEmbedding
+from google import genai
+from google.genai import types
 
 load_dotenv()
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+_client = None
+
+def _get_client():
+    global _client
+    if _client is None:
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            raise ValueError("GEMINI_API_KEY not found in environment. Check your .env file.")
+        _client = genai.Client(api_key=api_key)
+    return _client
 
 # LLM wrapper for LlamaIndex
-class GeminiLLMWrapperForLlama:
-    def __init__(self, model="text-bison-001", temperature=0.2):
-        self.model = model
-        self.temperature = temperature
+class GeminiLLMWrapperForLlama(CustomLLM):
+    model: str = "gemini-1.5-flash"
+    temperature: float = 0.2
+    context_window: int = 8192
+    num_output: int = 512
 
-    def predict(self, prompt: str) -> str:
-        response = genai.chat.create(
-            model=self.model,
-            messages=[{"author": "user", "content": prompt}],
-            temperature=self.temperature
+    @property
+    def metadata(self) -> LLMMetadata:
+        return LLMMetadata(
+            context_window=self.context_window,
+            num_output=self.num_output,
+            model_name=self.model,
         )
-        return response.last.split("\n")[0]
 
-llama_llm = LLMPredictor(llm=GeminiLLMWrapperForLlama())
+    @llm_completion_callback()
+    def complete(self, prompt: str, **kwargs) -> CompletionResponse:
+        response = _get_client().models.generate_content(
+            model=self.model,
+            contents=prompt,
+            config=types.GenerateContentConfig(temperature=self.temperature),
+        )
+        return CompletionResponse(text=response.text)
+
+    @llm_completion_callback()
+    def stream_complete(self, prompt: str, **kwargs):
+        raise NotImplementedError("Streaming not supported")
+
+# Configure LlamaIndex to use Gemini LLM and FastEmbed for local embeddings
+Settings.llm = GeminiLLMWrapperForLlama()
+Settings.embed_model = FastEmbedEmbedding(model_name="BAAI/bge-small-en-v1.5")
 
 # Load documents
 documents = SimpleDirectoryReader("data").load_data()
 
 # Create Vector Index
-index = VectorStoreIndex.from_documents(
-    documents,
-    service_context=ServiceContext.from_defaults(
-        llm_predictor=llama_llm,
-        prompt_helper=PromptHelper.from_defaults(
-            max_input_size=4096,
-            num_output=512,
-            max_chunk_overlap=20
-        )
-    )
-)
+index = VectorStoreIndex.from_documents(documents)
 
-query_engine = index.as_query_engine(llama_llm)
+query_engine = index.as_query_engine()
 
 def query_documents(user_query: str) -> str:
     response = query_engine.query(user_query)
-    return response.response
+    return str(response)

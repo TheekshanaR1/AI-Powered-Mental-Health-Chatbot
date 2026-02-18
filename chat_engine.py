@@ -1,24 +1,42 @@
 # chat_engine.py
 import os
 from dotenv import load_dotenv
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
 load_dotenv()
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+_client = None
+
+def _get_client():
+    global _client
+    if _client is None:
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            raise ValueError("GEMINI_API_KEY not found in environment. Check your .env file.")
+        _client = genai.Client(api_key=api_key)
+    return _client
 
 # Gemini LLM wrapper
 class GeminiLLMWrapper:
-    def __init__(self, model="chat-bison-001", temperature=0.2):
+    def __init__(self, model="gemini-1.5-flash", temperature=0.2):
         self.model = model
         self.temperature = temperature
 
     def generate(self, messages):
-        response = genai.chat.create(
+        # Convert session messages to Gemini Content format
+        contents = [
+            types.Content(
+                role="user" if m["author"] == "user" else "model",
+                parts=[types.Part(text=m["content"])]
+            )
+            for m in messages
+        ]
+        response = _get_client().models.generate_content(
             model=self.model,
-            messages=messages,
-            temperature=self.temperature
+            contents=contents,
+            config=types.GenerateContentConfig(temperature=self.temperature),
         )
-        return response.last.split("\n")[0]
+        return response.text
 
 # Session memory
 session_memory_map = {}
