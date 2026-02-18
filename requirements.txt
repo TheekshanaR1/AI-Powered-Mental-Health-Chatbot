@@ -1,0 +1,14 @@
+# Backend
+fastapi
+uvicorn
+
+# Gemini AI
+google-generativeai
+
+# Document engine
+llama-index
+llama-index-llms-gemini
+
+# Utilities
+python-dotenv
+requests
