@@ -11,7 +11,7 @@ SAFETY_MESSAGE = (
     "It sounds like you're going through a really tough time.\n"
     "You're not alone, and there are people who want to help you.\n"
     "Please consider reaching out to a mental health professional or contacting a helpline:\n\n"
-    "India: 9152987821 (iCall), 1800-599-0019 (Vandrevala Foundation)\n"
+    "1926 - National Mental Health Helpline-SriLanka\n"
 )
 
 def contains_crisis_keywords(text: str) -> bool:
