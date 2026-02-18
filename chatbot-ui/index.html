@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>MindEase - Mental Health Companion</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="/ui/style.css">
 </head>
 <body>
 
@@ -23,11 +23,9 @@
     <section class="hero">
         <h1>Your Mental Health Companion</h1>
         <p>
-            MindEase is here to support your emotional well-being. Whether you're
-            feeling overwhelmed, anxious, or just need someone to talk to, our
-            AI-powered chatbot offers a safe and friendly place to start.
-            Chat confidentially, get tips on self-care, and explore ways to
-            stay mentally strong every day.
+            MindEase is here to support your emotional well-being.
+            Chat confidentially, get self-care tips, and explore ways
+            to stay mentally strong every day.
         </p>
     </section>
 
@@ -36,23 +34,31 @@
 
     <!-- Chatbot Container -->
     <div id="chatContainer" class="chat-container">
-        <div class="chat-header">
-            MindEase Chatbot
-            <span class="close-btn" onclick="toggleChat()">×</span>
+
+        <div class="chat-card">
+
+            <div class="chat-header">
+                <span>MindEase Chatbot</span>
+                <!-- Circular Close Button -->
+                <div class="chat-close" onclick="toggleChat()">✕</div>
+            </div>
+
+            <div id="chatBox" class="chat-box"></div>
+
+            <div class="chat-input-area">
+                <input type="text" id="userInput"
+                       placeholder="Type your message..."
+                       onkeydown="if(event.key==='Enter') sendMessage()">
+
+                <button onclick="sendMessage()">➤</button>
+            </div>
+
         </div>
 
-        <div id="chatBox" class="chat-box"></div>
-
-        <div class="chat-input-area">
-            <input type="text" id="userInput" placeholder="Type your message..."
-                onkeydown="if(event.key==='Enter') sendMessage()">
-            <button onclick="sendMessage()">Send</button>
-        </div>
     </div>
 
-    <!-- Your Existing JavaScript -->
     <script>
-        const API_URL = "http://127.0.0.1:8001/chat";
+        const API_URL = "http://127.0.0.1:8000/chat";
         const session_id = "user_" + Math.floor(Math.random() * 10000);
 
         function toggleChat() {
@@ -63,18 +69,29 @@
         function appendMessage(role, text) {
             const box = document.getElementById("chatBox");
 
-            const msg = document.createElement("div");
-            msg.classList.add(role === "You" ? "user-msg" : "bot-msg");
-            msg.innerHTML = `<strong>${role}:</strong> ${text}`;
+            const messageWrapper = document.createElement("div");
+            messageWrapper.classList.add("message", role === "You" ? "user" : "bot");
 
-            box.appendChild(msg);
+            if (role !== "You") {
+                const avatar = document.createElement("div");
+                avatar.classList.add("avatar");
+                avatar.innerHTML = "🤖";
+                messageWrapper.appendChild(avatar);
+            }
+
+            const bubble = document.createElement("div");
+            bubble.classList.add("bubble");
+            bubble.innerText = text;
+
+            messageWrapper.appendChild(bubble);
+            box.appendChild(messageWrapper);
+
             box.scrollTop = box.scrollHeight;
         }
 
         async function sendMessage() {
             const input = document.getElementById("userInput");
             const text = input.value.trim();
-
             if (!text) return;
 
             appendMessage("You", text);
@@ -83,9 +100,7 @@
             try {
                 const res = await fetch(API_URL, {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
+                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         session_id: session_id,
                         query: text
@@ -93,18 +108,17 @@
                 });
 
                 const data = await res.json();
+                
                 if (data.response) {
                     appendMessage("Bot", data.response);
                 } else if (data.error) {
-                    appendMessage("Bot", "Sorry, I'm having trouble responding right now. Please try again in a moment.");
-                    console.error("API error:", data.error);
+                    appendMessage("Bot", "Sorry, I'm having trouble responding right now. Please try again later.");
                 } else {
-                    appendMessage("Bot", "Received an unexpected response. Please try again.");
+                    appendMessage("Bot", "I'm here to help you.");
                 }
 
             } catch (error) {
-                appendMessage("Bot", "Error connecting to server.");
-                console.error(error);
+                appendMessage("Bot", "Unable to connect to server.");
             }
         }
     </script>
