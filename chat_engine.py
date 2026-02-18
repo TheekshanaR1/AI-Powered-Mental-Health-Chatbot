@@ -18,7 +18,7 @@ def _get_client():
 
 # Gemini LLM wrapper
 class GeminiLLMWrapper:
-    def __init__(self, model="gemini-1.5-flash", temperature=0.2):
+    def __init__(self, model="gemini-2.5-flash", temperature=0.2):
         self.model = model
         self.temperature = temperature
 

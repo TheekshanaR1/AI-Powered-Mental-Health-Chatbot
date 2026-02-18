@@ -52,7 +52,7 @@
 
     <!-- Your Existing JavaScript -->
     <script>
-        const API_URL = "http://127.0.0.1:8000/chat";
+        const API_URL = "http://127.0.0.1:8001/chat";
         const session_id = "user_" + Math.floor(Math.random() * 10000);
 
         function toggleChat() {
@@ -93,7 +93,14 @@
                 });
 
                 const data = await res.json();
-                appendMessage("Bot", data.response);
+                if (data.response) {
+                    appendMessage("Bot", data.response);
+                } else if (data.error) {
+                    appendMessage("Bot", "Sorry, I'm having trouble responding right now. Please try again in a moment.");
+                    console.error("API error:", data.error);
+                } else {
+                    appendMessage("Bot", "Received an unexpected response. Please try again.");
+                }
 
             } catch (error) {
                 appendMessage("Bot", "Error connecting to server.");

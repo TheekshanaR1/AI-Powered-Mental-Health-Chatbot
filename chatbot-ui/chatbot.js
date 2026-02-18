@@ -1,4 +1,4 @@
-const API_URL = "http://127.0.0.1:8000/chat"; // Local FastAPI endpoint
+const API_URL = "http://127.0.0.1:8001/chat"; // Local FastAPI endpoint
 
 const session_id = "user_" + Math.floor(Math.random() * 10000); // Temporary user session
 
